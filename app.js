@@ -15,19 +15,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
-// Home page
+// HOME
 app.get('/', (req, res) => {
     res.render("index");
 });
 
 
-// Login page
+// LOGIN PAGE
 app.get('/login', (req, res) => {
     res.render("login");
 });
 
 
-// Register
+// REGISTER
 app.post('/register', async (req, res) => {
 
     let { email, password, username, name, age } = req.body;
@@ -66,7 +66,7 @@ app.post('/register', async (req, res) => {
 });
 
 
-// Login
+// LOGIN
 app.post('/login', async (req, res) => {
 
     let { email, password } = req.body;
@@ -102,19 +102,41 @@ app.post('/login', async (req, res) => {
 });
 
 
-// Protected profile
+// PROFILE
 app.get('/profile', isLoggedIn, async (req, res) => {
 
-    let user = await userModel.findOne({
-        email: req.user.email
-    });
+    let user = await userModel
+        .findOne({ email: req.user.email })
+        .populate("posts");
 
     res.render("profile", { user });
 
 });
 
 
-// Logout
+// CREATE POST
+app.post('/post', isLoggedIn, async (req, res) => {
+
+    let user = await userModel.findOne({
+        email: req.user.email
+    });
+
+    let { content } = req.body;
+
+    let post = await postModel.create({
+        user: user._id,
+        content
+    });
+
+    user.posts.push(post._id);
+
+    await user.save();
+
+    res.redirect("/profile");
+});
+
+
+// LOGOUT
 app.get('/logout', (req, res) => {
 
     res.cookie("token", "");
@@ -124,7 +146,7 @@ app.get('/logout', (req, res) => {
 });
 
 
-// Authentication middleware
+// AUTHENTICATION MIDDLEWARE
 function isLoggedIn(req, res, next) {
 
     if (!req.cookies.token) {
