@@ -114,6 +114,37 @@ app.get('/profile', isLoggedIn, async (req, res) => {
 });
 
 
+// LIKE / UNLIKE
+app.get('/like/:id', isLoggedIn, async (req, res) => {
+
+    let post = await postModel.findOne({
+        _id: req.params.id
+    });
+
+    if (!post) {
+        return res.status(404).send("Post not found");
+    }
+
+    let index = post.likes.indexOf(req.user.userid);
+
+    if (index === -1) {
+
+        // LIKE
+        post.likes.push(req.user.userid);
+
+    } else {
+
+        // UNLIKE
+        post.likes.splice(index, 1);
+
+    }
+
+    await post.save();
+
+    res.redirect("/profile");
+});
+
+
 // CREATE POST
 app.post('/post', isLoggedIn, async (req, res) => {
 
@@ -133,6 +164,44 @@ app.post('/post', isLoggedIn, async (req, res) => {
     await user.save();
 
     res.redirect("/profile");
+});
+
+
+// EDIT PAGE
+app.get('/edit/:id', isLoggedIn, async (req, res) => {
+
+    let post = await postModel.findOne({
+        _id: req.params.id
+    });
+
+    if (!post) {
+        return res.status(404).send("Post not found");
+    }
+
+    res.render("edit", { post });
+
+});
+
+
+// UPDATE POST
+app.post('/update/:id', isLoggedIn, async (req, res) => {
+
+    let { content } = req.body;
+
+    let post = await postModel.findOne({
+        _id: req.params.id
+    });
+
+    if (!post) {
+        return res.status(404).send("Post not found");
+    }
+
+    post.content = content;
+
+    await post.save();
+
+    res.redirect("/profile");
+
 });
 
 
